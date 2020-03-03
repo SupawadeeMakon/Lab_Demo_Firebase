@@ -2,17 +2,16 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:piwfirebase/utility/iot_model.dart';
 
-
 class MyHomePage extends StatefulWidget {
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool modeBool = false, led1Bool=false;
-  int modeInt = 0, led1Int = 0;
+  bool modeBool = false, led1Bool = false,led2Bool=false;
+  int modeInt = 0, led1Int = 0,led2Int=0;
+  String textname,led2="Status";
   IotModel iotModel;
-  
 
   FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
 
@@ -21,34 +20,32 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     readData();
     // print('Read Data Work');
-     
   }
 
-  Future <void> readData() async {
+  Future<void> readData() async {
     print('Read Data Work');
 
     DatabaseReference databaseReference =
         firebaseDatabase.reference().child('IoT');
     await databaseReference.once().then((DataSnapshot dataSnapshot) {
       //print('Data=>${dataSnapshot.value}');
-     
+
       print('dataSnapshot = ${dataSnapshot.value}');
       iotModel = IotModel.formMap(dataSnapshot.value);
 
       /*อ่านค่าจากFirebase มาเก็บในตัวแปร*/
       modeInt = iotModel.mode;
       led1Int = iotModel.led1;
+      led2Int = iotModel.led2;
+      textname = iotModel.name;
       checkSwitch();
     });
-    
   }
 
-
-Future<void> editDatabase() async {
+  Future<void> editDatabase() async {
     //ฟังก์ชันโยนค่าขึ้นFirebase
 
-    print(
-        'mode=$modeBool');
+    print('mode=$modeBool');
     FirebaseDatabase firebaseDatabase = FirebaseDatabase.instance;
     DatabaseReference databaseReference =
         firebaseDatabase.reference().child('IoT');
@@ -56,14 +53,14 @@ Future<void> editDatabase() async {
     Map<dynamic, dynamic> map = Map();
     map['mode'] = modeInt;
     map['led1'] = led1Int;
-
+    map['led2'] = led2Int;
 
     //โยนขึ้น Firebase
     await databaseReference.set(map).then((response) {
       print('Edit Success');
     });
   }
-  
+
   void checkSwitch() {
     setState(() {
       if (iotModel.mode == 0) {
@@ -72,16 +69,19 @@ Future<void> editDatabase() async {
         modeBool = true;
       }
 
+      if (iotModel.led2 == 0) {
+        led2Bool = false;
+      } else {
+        led2Bool = true;
+      }
+
       if (iotModel.led1 == 0) {
         led1Bool = false;
       } else {
         led1Bool = true;
       }
-
-
     });
-    print(
-        'mode=$modeBool,led1=$led1Bool');
+    print('mode=$modeBool,led1=$led1Bool,led2=$led2Bool');
   }
 
   Widget switchMode() {
@@ -146,6 +146,37 @@ Future<void> editDatabase() async {
     );
   }
 
+  Widget buttonLed2(){
+    return Container(
+        padding: new EdgeInsets.all(32.0),
+        child: SizedBox(
+                  height: 100,
+                  width: 300, // specific value
+                  child: RaisedButton.icon(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40.0)),
+                      onPressed: () {
+                        
+                        setState(() {
+                            led2Int = led2Int;
+                            if (led2Int==0) {
+                            led2Int = 1;
+                            led2="ON";
+                            } else {
+                            led2Int = 0;
+                            led2="OFF";
+                            }
+                            print('$led2Int');
+                          editDatabase();
+                      });
+                      },
+                      icon: Icon(Icons.ac_unit),
+                      label: Text('LED2:$led2'))),
+      );
+    
+  }    
+  
+
   void changeModeBool(bool value) {
     setState(() {
       modeBool = value;
@@ -171,8 +202,19 @@ Future<void> editDatabase() async {
     });
   }
 
+  void changeLed2(bool value) {
+    setState(() {
+      led2Bool = value;
+      if (modeBool) {
+        led2Int = 1;
+      } else {
+        led2Int = 0;
+      }
+      editDatabase();
+    });
+  }
 
-   Widget modeRow() {
+  Widget modeRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
@@ -183,16 +225,28 @@ Future<void> editDatabase() async {
   Widget topRow() {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: <Widget>[switchLed1(), switchLed1()],
+      children: <Widget>[switchLed1()],
     );
   }
 
   Widget bottonRow() {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: <Widget>[switchLed1(), switchLed1()],
+      children: <Widget>[buttonLed2()],
     );
   }
+
+  Widget showText() {
+    return Center(
+      child: Container(
+        
+        child: Text('$textname'),
+        
+      ),
+    );
+  }
+
+  
 
   Widget build(BuildContext context) {
     return Container(
@@ -205,10 +259,10 @@ Future<void> editDatabase() async {
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: <Widget>[modeRow(), topRow(), bottonRow()],
+          children: <Widget>[
+            showText(), modeRow(), topRow(), bottonRow()],
         ),
       ),
     );
-    
   }
 }

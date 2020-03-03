@@ -8,7 +8,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool modeBool = false, led1Bool = false,led2Bool=false;
+  bool modeBool = false, led1Bool = false;
   int modeInt = 0, led1Int = 0,led2Int=0;
   String textname,led2="Status";
   IotModel iotModel;
@@ -69,19 +69,13 @@ class _MyHomePageState extends State<MyHomePage> {
         modeBool = true;
       }
 
-      if (iotModel.led2 == 0) {
-        led2Bool = false;
-      } else {
-        led2Bool = true;
-      }
-
       if (iotModel.led1 == 0) {
         led1Bool = false;
       } else {
         led1Bool = true;
       }
     });
-    print('mode=$modeBool,led1=$led1Bool,led2=$led2Bool');
+    print('mode=$modeBool,led1=$led1Bool');
   }
 
   Widget switchMode() {
@@ -202,18 +196,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void changeLed2(bool value) {
-    setState(() {
-      led2Bool = value;
-      if (modeBool) {
-        led2Int = 1;
-      } else {
-        led2Int = 0;
-      }
-      editDatabase();
-    });
-  }
-
+  
   Widget modeRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
